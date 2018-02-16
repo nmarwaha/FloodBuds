@@ -12,5 +12,5 @@ void loop()
 {
   val = analogRead(sensorpin);       // reads the value of the sharp sensor
   Serial.println(val);            // prints the value of the sensor to the serial monitor
-  delay(400);                    // wait for this much time before printing next value
+  delay(400);                    // wait for this much time before printing next value beep
 }
