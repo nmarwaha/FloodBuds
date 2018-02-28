@@ -30,7 +30,6 @@ void loop() {
     delay(500);
   }
   delay(5000);
-  serial.print(
 }
 
 
