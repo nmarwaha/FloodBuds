@@ -1,4 +1,5 @@
 //collects data from an analog sensor
+//red to 5V, black to GND, yellow to A0
 
 int sensorpin = 0;                 // analog pin used to connect the sharp sensor
 int val = 0;                 // variable to store the values from sensor(initially zero)
