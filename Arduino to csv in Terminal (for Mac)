@@ -1,7 +1,0 @@
-//Use this code in Terminal to export the data outputted by Aruduino into a .csv file
-//May need to change "cu.usbmodem1421" in Line 5 to another port. In Arduino, check by going to Tools -> Port,
-//and replace with whichever port has a check mark.
-
-screen /dev/cu.usbmodem1421
-
-//Shell -> Export Text As...
