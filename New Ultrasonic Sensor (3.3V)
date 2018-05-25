@@ -1,0 +1,32 @@
+// Use these pins for Uno
+const int trigger=6;
+const int echo=7;
+float distance;
+
+void setup(){
+ Serial.begin(9600);
+ pinMode(trigger,OUTPUT);
+ pinMode(echo,INPUT);
+}
+
+void loop(){
+// Trigger US-100 to start measurement
+ // Set up trigger
+ digitalWrite(trigger,LOW);
+ delayMicroseconds(5);
+ 
+ // Start Measurement
+ digitalWrite(trigger,HIGH);
+ delayMicroseconds(10);
+ digitalWrite(trigger,LOW);
+ 
+ // Acquire and convert to centimeters
+ distance=pulseIn(echo,HIGH);
+ distance=distance*0.01657;
+ 
+ // send result to UART
+ Serial.print("Distance = ");
+ Serial.print(distance);
+ Serial.println(" cm");
+ delay(5000);
+}
