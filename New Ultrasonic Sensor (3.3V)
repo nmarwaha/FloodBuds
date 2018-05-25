@@ -1,6 +1,11 @@
 // Use these pins for Uno
 const int trigger=6;
 const int echo=7;
+
+// Use these pins for Fio
+const int trigger = 5;
+const int echo = 7;
+
 float distance;
 
 void setup(){
