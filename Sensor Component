@@ -1,0 +1,96 @@
+// Use these pins for Uno
+const int trigger=6;
+const int echo=7;
+
+#include <avr/sleep.h>
+#include <avr/wdt.h>
+#include <SoftwareSerial.h>
+SoftwareSerial XBee(2, 3); // RX, TX
+
+float distance, totaldistance, nummeasures, avgdistance;
+// distance = singular measurement taken from sensor
+// totaldistance = summation of all distance measurements
+// nummeasures = total number of measurements taken
+// avgdistance = average of the total number of measurements taken
+
+#define LED 13 // LED on when system on
+
+// watchdog interrupt
+ISR(WDT_vect) 
+  {
+  wdt_disable();  // disable watchdog
+  }
+
+void myWatchdogEnable(const byte interval) 
+  {  
+  MCUSR = 0;                          // reset various flags
+  WDTCSR |= 0b00011000;               // see docs, set WDCE, WDE
+  WDTCSR =  0b01000000 | interval;    // set WDIE, and appropriate delay
+
+  wdt_reset();
+  set_sleep_mode (SLEEP_MODE_PWR_DOWN);  
+  sleep_mode();            // now goes to sleep and waits for the interrupt
+  } 
+
+void setup(){
+ Serial.begin(9600);
+ XBee.begin(9600);
+ pinMode(trigger,OUTPUT);
+ pinMode(echo,INPUT);
+}
+
+void loop(){
+
+  digitalWrite (LED, HIGH);  // awake
+  delay (2000);
+
+  nummeasures = 10;
+  
+  for(int i = 1; i <= nummeasures; i++)
+  {
+    // Trigger US-100 to start measurement
+    // Set up trigger
+    digitalWrite(trigger,LOW);
+    delayMicroseconds(5);
+ 
+    // Start Measurement
+    digitalWrite(trigger,HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigger,LOW);
+ 
+    // Acquire and convert to centimeters
+    distance=pulseIn(echo,HIGH);
+    distance=distance*0.01657;
+
+    // send result to UART
+    Serial.print("Distance ");
+    Serial.print(i);
+    Serial.print("  = ");
+    Serial.print(distance);
+    Serial.println(" cm");
+    //XBee.write(distance);
+
+    totaldistance += distance; 
+    delay(100);
+    avgdistance = totaldistance/nummeasures;
+  }
+
+  Serial.print("Average Distance = ");
+  Serial.print(avgdistance);
+  Serial.println(" cm");
+  Serial.print("\n");
+  XBee.write(avgdistance);
+  delay(2000);
+
+  totaldistance = 0;
+  // Resets total distance back to 0 to begin loop again
+
+  digitalWrite (LED, LOW);  // asleep
+
+  // sleep for a total of 30 minutes
+  //int k;
+  //for (k = 0; k < 225; k++)
+  {
+  myWatchdogEnable (0b100001);  // 8 seconds
+  }  // end of loop
+}
