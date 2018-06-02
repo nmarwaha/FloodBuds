@@ -1,0 +1,61 @@
+#define trigPin 10
+#define echoPin 13
+//vcc to 5v, gnd to gnd
+
+// We'll use SoftwareSerial to communicate with the XBee:
+#include <SoftwareSerial.h>
+// XBee's DOUT (TX) is connected to pin 2 (Arduino's Software RX)
+// XBee's DIN (RX) is connected to pin 3 (Arduino's Software TX)
+SoftwareSerial XBee(2, 3); // RX, TX
+
+
+void setup() {
+  Serial.begin (9600);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  XBee.begin(9600);
+}
+
+void loop() {
+  float duration, distance, height, averageHeight, cumulativeHeight, maxiter;
+  maxiter=10;
+  for(int i = 0; i < maxiter; i++)
+  {
+  digitalWrite(trigPin, LOW); 
+  delayMicroseconds(2);
+ 
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  
+  duration = pulseIn(echoPin, HIGH);
+  distance=((duration / 2) * 0.0344);
+  //height = 59.5-distance;             //47.625 w/ stool
+  height = distance;             //47.625 w/ stool
+  
+  if (distance >= 400) {
+    //Serial.print("Distance = ");
+    Serial.println("Out of range");
+  }
+  else {
+    //Serial.print("Height = ");
+    //Serial.print(height);
+    //Serial.print('\n');
+    //Serial.println(" cm");
+    delay(50);
+    
+    cumulativeHeight += height;
+    
+  }
+  delay(100);
+  }
+    averageHeight=cumulativeHeight/maxiter;
+    Serial.print(averageHeight);
+    Serial.print('\n');
+    XBee.print(averageHeight);
+    //XBee.print(" cm");
+    //XBee.print('\n');
+
+delay(2000);
+}

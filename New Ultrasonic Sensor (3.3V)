@@ -1,0 +1,38 @@
+// Use these pins for Uno, Old Sensor
+const int trigger=10;
+const int echo=13;
+
+#include <SoftwareSerial.h>
+SoftwareSerial XBee(2, 3); // RX, TX
+
+float distance;
+
+void setup(){
+ Serial.begin(9600);
+ XBee.begin(9600);
+ pinMode(trigger,OUTPUT);
+ pinMode(echo,INPUT);
+}
+
+void loop(){
+// Trigger US-100 to start measurement
+ // Set up trigger
+ digitalWrite(trigger,LOW);
+ delayMicroseconds(5);
+ 
+ // Start Measurement
+ digitalWrite(trigger,HIGH);
+ delayMicroseconds(10);
+ digitalWrite(trigger,LOW);
+ 
+ // Acquire and convert to centimeters
+ distance=pulseIn(echo,HIGH);
+ distance=distance*0.01657;
+ 
+ // send result to UART
+ Serial.print("Distance = ");
+ Serial.print(distance);
+ Serial.println(" cm");
+ XBee.println(distance);
+ delay(5000);
+}
