@@ -1,21 +1,31 @@
-// Use these pins for Uno
+// Pin connections for Arduino Uno
 const int trigger=6;
 const int echo=7;
+// Vcc goes to 5V pin on Arduino
+// GND pin goes to GND pin on Arduino 
 
+// Include these libraries in code.
+// Used for sleep function.
 #include <avr/sleep.h>
 #include <avr/wdt.h>
+// Used for XBee shield.
 #include <SoftwareSerial.h>
 SoftwareSerial XBee(2, 3); // RX, TX
 
-float distance, totaldistance, nummeasures, avgdistance;
+// Names variables that will later be used.
+float distance, totaldistance, nummeasures, avgdistance, deviation, totaldeviation, avgdeviation;
 // distance = singular measurement taken from sensor
 // totaldistance = summation of all distance measurements
 // nummeasures = total number of measurements taken
 // avgdistance = average of the total number of measurements taken
+// deviation = difference in particular distance and overall average distance
+// totaldeviation = summation of all deviation calculations
+// avgdeviation = average deviation of the total number of measurements taken
 
-#define LED 13 // LED on when system on
+// Turn LED on when the system is on.
+#define LED 13
 
-// watchdog interrupt
+// Watchdog interrupt
 ISR(WDT_vect) 
   {
   wdt_disable();  // disable watchdog
@@ -23,16 +33,17 @@ ISR(WDT_vect)
 
 void myWatchdogEnable(const byte interval) 
   {  
-  MCUSR = 0;                          // reset various flags
-  WDTCSR |= 0b00011000;               // see docs, set WDCE, WDE
-  WDTCSR =  0b01000000 | interval;    // set WDIE, and appropriate delay
+  MCUSR = 0;                          // Reset various flags
+  WDTCSR |= 0b00011000;               // See docs, set WDCE, WDE
+  WDTCSR =  0b01000000 | interval;    // Set WDIE, and appropriate delay
 
   wdt_reset();
   set_sleep_mode (SLEEP_MODE_PWR_DOWN);  
-  sleep_mode();            // now goes to sleep and waits for the interrupt
+  sleep_mode();            // Now goes to sleep and waits for the interrupt
   } 
 
 void setup(){
+ // Sets up components to run.
  Serial.begin(9600);
  XBee.begin(9600);
  pinMode(trigger,OUTPUT);
@@ -41,11 +52,15 @@ void setup(){
 
 void loop(){
 
-  digitalWrite (LED, HIGH);  // awake
-  delay (2000);
+  // System is awake.
+  digitalWrite (LED, HIGH);
+  delay (10);
 
+  // Sets the burst of measurements to be taken.
   nummeasures = 10;
-  
+
+  // Sets up the loop to take a burst of measurements
+  // and then find the average.
   for(int i = 1; i <= nummeasures; i++)
   {
     // Trigger US-100 to start measurement
@@ -62,7 +77,7 @@ void loop(){
     distance=pulseIn(echo,HIGH);
     distance=distance*0.01657;
 
-    // send result to UART
+    // Send result to UART
     Serial.print("Distance ");
     Serial.print(i);
     Serial.print("  = ");
@@ -70,27 +85,33 @@ void loop(){
     Serial.println(" cm");
     //XBee.write(distance);
 
+    // Create sum of all distances
     totaldistance += distance; 
-    delay(100);
+    // Finds average distance
     avgdistance = totaldistance/nummeasures;
   }
 
+  // Prints average distance in serial monitor.
   Serial.print("Average Distance = ");
   Serial.print(avgdistance);
   Serial.println(" cm");
   Serial.print("\n");
+  // Writes average distance to XBee to be sent to main hub.
   XBee.write(avgdistance);
-  delay(2000);
+  delay(1000);
 
+  // Sets total distance back to 0 to begin loop again.
   totaldistance = 0;
-  // Resets total distance back to 0 to begin loop again
 
-  digitalWrite (LED, LOW);  // asleep
+  // System is asleep now.
+  digitalWrite (LED, LOW);
 
-  // sleep for a total of 30 minutes
-  //int k;
-  //for (k = 0; k < 225; k++)
+  //Arduino sleep mode: set for 3 hours
+  //for (int k = 0; k <= 1350; k++)
   {
   myWatchdogEnable (0b100001);  // 8 seconds
   }  // end of loop
+
+  // XBee sleep mode here
+  
 }
