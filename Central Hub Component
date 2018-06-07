@@ -13,7 +13,7 @@ SoftwareSerial XBee(2, 3); // RX, TX
 int distance;
 long time;
 
-void setup(){
+void setup() {
  // Sets up components to run.
  Serial.begin(9600);
  XBee.begin(9600);
@@ -38,48 +38,50 @@ void setup(){
  Serial.println("Distance (cm)");
 }
 
-
 void loop() {
-
-  if (XBee.available()) {
+  // put your main code here, to run repeatedly:
+  while (XBee.available()) {
     distance = XBee.read();
     
-  // Records time since program has been running.
+    // Records time since program has been running.
     time = millis()/1000; // Gives time in seconds
 
-  // Sends an alert message if water is above certain height.
-  // Change preferred height below where it says "distance >= value"
-  if (distance >= 20) {
-    Serial.print(time);
-    Serial.print("\t");
-    Serial.print("Out of Range, ");
-    Serial.println(distance);
 
-    byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-    byte ip[] = { 192,168,2,2 };
-    Twitter twitter("1002348673022324736-t0xZnDr3tLNMBxVwdVdjpXvliBVABq");
+    // Sends an alert message if water is above certain height.
+    // Change preferred height below where it says "distance >= value"
+    if (distance >= 20) {
+      Serial.print(time);
+      Serial.print("\t");
+      Serial.print("\t");
+      Serial.print(distance);
+      Serial.print("\t");
+      Serial.print("Out of Range!");
 
-    // Indexes alert message since Twitter does not allow duplicate messages.
-    char msg[200];
+      byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+      byte ip[] = { 192,168,2,2 };
+      Twitter twitter("1002348673022324736-t0xZnDr3tLNMBxVwdVdjpXvliBVABq");
 
-    sprintf(msg, "Running time: %d seconds. \nAlert: Water levels are too high! \n", time);
+      // Message to be sent to Twitter.
+      char msg[75];
+      sprintf(msg, "Running time: %d seconds. \nAlert: Water levels are too high! \n", time);
     
-    // Begins Ethernet connection.
-    Ethernet.begin(mac, ip);
-  
-    Serial.println("Connecting ...");
+      // Begins Ethernet connection.
+      Ethernet.begin(mac, ip);
+
+      Serial.print("\t");
+      Serial.print("Connecting ... ");
       if (twitter.post(msg)) {
-      int status = twitter.wait();
-      Serial.println(msg);
-      if (status == 200) {
-        Serial.println("OK.\n");
-      } 
+        int status = twitter.wait();
+        //Serial.println(msg);
+        if (status == 200) {
+          Serial.print("Message Sent.");
+        } 
+        else {
+          Serial.print("Failed : Code ");
+          Serial.print(status);
+        }} 
       else {
-        Serial.print("Failed : Code ");
-        Serial.println(status);
-      }} 
-      else {
-        Serial.println("Connection Failed. \n");
+        Serial.print("Connection Failed.");
       }}
 
     // If water is not above predetermined height, don't send alert.
@@ -87,31 +89,32 @@ void loop() {
       Serial.print(time);
       Serial.print("\t");
       Serial.print("\t");
-      Serial.println(distance);
+      Serial.print(distance);
     }
 
-    // Creates a string for the data to be put into.
-    String dataString = "";
-    dataString += String(distance);
-    dataString += ",";
+  // Creates a string for the data to be put into.
+  String dataString = "";
+  dataString += String(distance);
+  dataString += ",";
 
-    // Open the file. Note that only one file can be open at a time,
-    // so you have to close this one before opening another.
-    // Change the name of the file below.
-    // Can change to .txt for text file, or .csv for Excel file.
-    File dataFile = SD.open("test2.txt", FILE_WRITE);
+  // Open the file. Note that only one file can be open at a time,
+  // so you have to close this one before opening another.
+  // Change the name of the file below.
+  // Can change to .txt for text file, or .csv for Excel file.
+  File dataFile = SD.open("showcase.txt", FILE_WRITE);
 
-    // If the file is available, write to it:
-    if (dataFile) {
-      dataFile.println(dataString);
-      dataFile.close();
-      // Print to the serial port too:
-      //Serial.println(dataString);
-      Serial.println("Saved to SD Card.\n");
-     }
-      // If the file isn't open, pop up an error:
-    else {
-      Serial.println("Error Opening File. \n");
-     }
-  }
-  }
+  // If the file is available, write to it:
+  if (dataFile) {
+    dataFile.println(dataString);
+    dataFile.close();
+    // Print to the serial port too:
+    //Serial.println(dataString);
+    Serial.print("\t");
+    Serial.println("Saved to SD Card.\n");
+   }
+    // If the file isn't open, pop up an error:
+  else {
+    Serial.print("\t");
+    Serial.println("Error Opening File. \n");
+   }
+}}
