@@ -1,0 +1,117 @@
+// Include these libraries in code.
+// Used for SD card functions.
+#include <SPI.h>
+#include <SD.h>
+// Used for SMS message function.
+#include <Ethernet.h>
+#include <Twitter.h>
+// Used for XBee shield.
+#include <SoftwareSerial.h>
+SoftwareSerial XBee(2, 3); // RX, TX
+
+// Assigns variable names to be used later.
+int distance;
+long time;
+
+void setup(){
+ // Sets up components to run.
+ Serial.begin(9600);
+ XBee.begin(9600);
+
+ // Wait for serial port to connect. Needed for native USB port only.
+ while (!Serial) {
+    ;
+ }
+
+  Serial.print("Initializing SD card... \n");
+    // See if the card is present and can be initialized.
+    if (!SD.begin(4)) {
+    Serial.println("Card failed, or Not Present \n");
+    // Don't do anything more:
+    while (1);
+  }
+  Serial.println("Card Initialized. \n");
+
+ // Sets up columns in serial monitor.
+ Serial.print("Time (sec)");
+ Serial.print("\t");
+ Serial.println("Distance (cm)");
+}
+
+
+void loop() {
+
+  if (XBee.available()) {
+    distance = XBee.read();
+    
+  // Records time since program has been running.
+    time = millis()/1000; // Gives time in seconds
+
+  // Sends an alert message if water is above certain height.
+  // Change preferred height below where it says "distance >= value"
+  if (distance >= 20) {
+    Serial.print(time);
+    Serial.print("\t");
+    Serial.print("Out of Range, ");
+    Serial.println(distance);
+
+    byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+    byte ip[] = { 192,168,2,2 };
+    Twitter twitter("1002348673022324736-t0xZnDr3tLNMBxVwdVdjpXvliBVABq");
+
+    // Indexes alert message since Twitter does not allow duplicate messages.
+    char msg[200];
+
+    sprintf(msg, "Running time: %d seconds. \nAlert: Water levels are too high! \n", time);
+    
+    // Begins Ethernet connection.
+    Ethernet.begin(mac, ip);
+  
+    Serial.println("Connecting ...");
+      if (twitter.post(msg)) {
+      int status = twitter.wait();
+      Serial.println(msg);
+      if (status == 200) {
+        Serial.println("OK.\n");
+      } 
+      else {
+        Serial.print("Failed : Code ");
+        Serial.println(status);
+      }} 
+      else {
+        Serial.println("Connection Failed. \n");
+      }}
+
+    // If water is not above predetermined height, don't send alert.
+    else {
+      Serial.print(time);
+      Serial.print("\t");
+      Serial.print("\t");
+      Serial.println(distance);
+    }
+
+    // Creates a string for the data to be put into.
+    String dataString = "";
+    dataString += String(distance);
+    dataString += ",";
+
+    // Open the file. Note that only one file can be open at a time,
+    // so you have to close this one before opening another.
+    // Change the name of the file below.
+    // Can change to .txt for text file, or .csv for Excel file.
+    File dataFile = SD.open("test2.txt", FILE_WRITE);
+
+    // If the file is available, write to it:
+    if (dataFile) {
+      dataFile.println(dataString);
+      dataFile.close();
+      // Print to the serial port too:
+      //Serial.println(dataString);
+      Serial.println("Saved to SD Card.\n");
+     }
+      // If the file isn't open, pop up an error:
+    else {
+      Serial.println("Error Opening File. \n");
+     }
+  }
+  }
